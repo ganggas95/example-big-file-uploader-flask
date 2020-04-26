@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <form>
+        <input type="file" name="file" />
+    </form>
+    <script>
+        window.addEventListener('load', () => {
+            const fileInput = document.querySelector('input[name="file"]');
+            if (fileInput) {
+                fileInput.addEventListener("change", fileChange)
+            }
+        });
+        function fileChange(event) {
+            const { files } = event.target;
+            if (files.length > 0) {
+                fileReader(files[0], (result) => {
+                    splitAndSendFile(new Uint8Array(result), files[0])
+                })
+            }
+        }
+        function fileReader(files, cb) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                cb(event.target.result);
+            }
+            reader.readAsArrayBuffer(files);
+        }
+
+        async function splitAndSendFile(dataArray, file) {
+
+            let fileResponse = null;
+            await fetch("/upload", {
+                method: "POST",
+                body: JSON.stringify({
+                    Name: file.name,
+                    Size: file.size,
+                })
+            }).then(resp => resp.json())
+                .then(res => fileResponse = res);
+            var i = 0, formData, blob;
+            for (; i < dataArray.length; i += 1e6) {
+                blob = new Blob([dataArray.subarray(i, i + 1e6)]);
+                formData = new FormData();
+                formData.append("file", blob, file.name + ".part" + (i / 1e6));
+                formData.append("metadata", JSON.stringify(fileResponse));
+                await fetch("/upload", {
+                    method: "PUT",
+                    body: formData,
+                }).then(res => res.json())
+                    .then(res => {
+                        console.log(res);
+                    })
+            }
+
+        }
+    </script>
+</body>
+
+</html>
