@@ -35,31 +35,34 @@
         }
 
         async function splitAndSendFile(dataArray, file) {
-
+            console.log(file)
             let fileResponse = null;
-            await fetch("/upload", {
+            await fetch("http://data.spab.kemdikbud.go.id:8004/api/upload", {
                 method: "POST",
+                headers: {
+                    "Authorization": "3ff9f8ed55d06899bfd86",
+                },
                 body: JSON.stringify({
-                    Name: file.name,
-                    Size: file.size,
+                    filename: file.name,
+                    size: file.size,
+                    type: file.type,
                 })
             }).then(resp => resp.json())
-                .then(res => fileResponse = res);
-            var i = 0, formData, blob;
-            for (; i < dataArray.length; i += 1e6) {
-                blob = new Blob([dataArray.subarray(i, i + 1e6)]);
-                formData = new FormData();
-                formData.append("file", blob, file.name + ".part" + (i / 1e6));
-                formData.append("metadata", JSON.stringify(fileResponse));
-                await fetch("/upload", {
-                    method: "PUT",
-                    body: formData,
-                }).then(res => res.json())
-                    .then(res => {
-                        console.log(res);
-                    })
-            }
-
+                .then(async res => {
+                    var i = 0, formData, blob;
+                    for (; i < dataArray.length; i += 410) {
+                        blob = new Blob([dataArray.subarray(i, i + 410)]);
+                        formData = new FormData();
+                        formData.append("file", blob, file.name + ".part" + (i / 410));
+                        await fetch("http://data.spab.kemdikbud.go.id:8004/api/upload/" + res.data.id, {
+                            method: "PUT",
+                            body: formData,
+                            headers: {
+                                "Authorization": "3ff9f8ed55d06899bfd86",
+                            }
+                        });
+                    }
+                });
         }
     </script>
 </body>
