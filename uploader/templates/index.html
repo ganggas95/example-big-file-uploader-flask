@@ -37,11 +37,8 @@
         async function splitAndSendFile(dataArray, file) {
             console.log(file)
             let fileResponse = null;
-            await fetch("http://data.spab.kemdikbud.go.id:8004/api/upload", {
+            await fetch("http://localhost:8123/upload", {
                 method: "POST",
-                headers: {
-                    "Authorization": "3ff9f8ed55d06899bfd86",
-                },
                 body: JSON.stringify({
                     filename: file.name,
                     size: file.size,
@@ -49,19 +46,21 @@
                 })
             }).then(resp => resp.json())
                 .then(async res => {
-                    var i = 0, formData, blob;
-                    for (; i < dataArray.length; i += 410) {
-                        blob = new Blob([dataArray.subarray(i, i + 410)]);
+                    var i = 0, formData, blob, timeout;
+                    for (; i < dataArray.length; i += 1410) {
+                        blob = new Blob([dataArray.subarray(i, i + 1410)]);
                         formData = new FormData();
-                        formData.append("file", blob, file.name + ".part" + (i / 410));
-                        await fetch("http://data.spab.kemdikbud.go.id:8004/api/upload/" + res.data.id, {
+                        formData.append("file", blob, file.name + ".part" + (i / 1410));
+                        await fetch("http://localhost:8123/upload?filename=" + res.filename, {
                             method: "PUT",
                             body: formData,
-                            headers: {
-                                "Authorization": "3ff9f8ed55d06899bfd86",
-                            }
                         });
+                        timeout = setTimeout(async () => {
+
+                        }, 1000);
+                        // clearTimeout(timeout)
                     }
+
                 });
         }
     </script>
